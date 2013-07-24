@@ -19,12 +19,12 @@ public class ForestView extends mvc.View
 
   public void paintComponent(Graphics aGraphics)
   {
-    Graphics offsetGraphics = model.picture().getGraphics();
-
     int width = this.getWidth();
     int height = this.getHeight();
     aGraphics.setColor(Color.white);
     aGraphics.fillRect(0, 0, width, height);
+
+    Graphics offsetGraphics = model.picture().getGraphics();
     offsetGraphics.setColor(Color.white);
     offsetGraphics.fillRect(0, 0, model.picture().getWidth(), model.picture().getHeight());
     return;

@@ -26,7 +26,6 @@ public class ForestModel extends mvc.Model
   {
     super();
     forestNodes = new ArrayList<ForestNode>();
-    this.picture(new BufferedImage(1000, 1000, BufferedImage.TYPE_INT_BGR));
     this.createNodes(aFile);
     this.open(aFile.getName());
     this.perform();
@@ -37,18 +36,30 @@ public class ForestModel extends mvc.Model
     ForestView aView = new ForestView(this);
     JFrame aWindow = new JFrame(aFileName);
     aView.setLayout(null);
-    aWindow.setLayout(null); // test
-    aWindow.getRootPane().setDoubleBuffered(true);
-    aView.setDoubleBuffered(true);
 
+    int maxWidth = 0;
+    int maxHeight = 0;
+    for (ForestNode aNode : forestNodes)
+      {
+        JLabel aLabel = aNode.getLabel();
+        if (aLabel.getWidth() > maxWidth)
+          {
+            maxWidth = aLabel.getWidth();
+          }
+        if (aLabel.getHeight() > maxHeight)
+          {
+            maxHeight = aLabel.getHeight();
+          }
+      }
+    int maximumWidth = forestNodes.size() * maxWidth + 20 * (forestNodes.size() - 1);
+    int maximumHeight = forestNodes.size() * maxHeight + forestNodes.size();
+    this.picture(new BufferedImage(maximumWidth, maximumHeight, BufferedImage.TYPE_INT_BGR));
+
+    aWindow.getContentPane().add(aView);
     aWindow.setMinimumSize(new Dimension(400, 300));
     aWindow.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     aWindow.setSize(800, 600);
     aWindow.setVisible(true);
-
-    aView.setBounds(0, 0, aWindow.getWidth() + 1000, aWindow.getHeight() + 1000); // test
-
-    aWindow.getContentPane().add(aView);
 
     int x = 1, y = 1;
     for (ForestNode aNode : forestNodes)

@@ -96,7 +96,6 @@ public class ForestNode extends Object
           {
             aChild.recursiveInitRows();
             rows += aChild.getRows();
-            System.out.println(rows);
           }
       }
     else

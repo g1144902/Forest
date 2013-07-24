@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.awt.Color;
 import java.awt.Point;
 import java.awt.Graphics;
+import java.awt.image.BufferedImage;
 import javax.swing.JLabel;
 
 
@@ -18,19 +19,24 @@ public class ForestView extends mvc.View
 
   public void paintComponent(Graphics aGraphics)
   {
-    Point offset = this.scrollAmount(); // test
-    this.setLocation(-offset.x, -offset.y); // test
+    Graphics offsetGraphics = model.picture().getGraphics();
+
     int width = this.getWidth();
     int height = this.getHeight();
     aGraphics.setColor(Color.white);
     aGraphics.fillRect(0, 0, width, height);
+    offsetGraphics.setColor(Color.white);
+    offsetGraphics.fillRect(0, 0, model.picture().getWidth(), model.picture().getHeight());
     return;
   }
 
   public void paintChildren(Graphics aGraphics)
   {
-    super.paintChildren(aGraphics);
-    aGraphics.setColor(Color.black);
+    super.paintChildren(model.picture().getGraphics());
+
+    Graphics offsetGraphics = model.picture().getGraphics();
+    offsetGraphics.setColor(Color.black);
+
     ForestModel aModel = (ForestModel) model;
     JLabel aNodeLabel;
     int aNodeX, aNodeY;
@@ -48,10 +54,11 @@ public class ForestView extends mvc.View
             aParentX = aParentLabel.getX() + aParentLabel.getWidth();
             aParentY = aParentLabel.getY() + aParentLabel.getHeight() / 2;
             
-            aGraphics.drawLine(aNodeX, aNodeY, aParentX, aParentY);
+            offsetGraphics.drawLine(aNodeX, aNodeY, aParentX, aParentY);
           }
       }
-
+    Point offset = this.scrollAmount();
+    aGraphics.drawImage(model.picture(), -offset.x, -offset.y, null);
   }
 
 }

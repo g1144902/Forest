@@ -22,21 +22,24 @@ public class ForestModel extends mvc.Model
    */
   private ArrayList<ForestNode> forestNodes;
 
-  public ForestModel()
+  public ForestModel(File aFile)
   {
     super();
     forestNodes = new ArrayList<ForestNode>();
-    this.createNodes("./texts/forest.txt");
-    this.open();
+    this.picture(new BufferedImage(1000, 1000, BufferedImage.TYPE_INT_BGR));
+    this.createNodes(aFile);
+    this.open(aFile.getName());
     this.perform();
   }
 
-  public void open()
+  public void open(String aFileName)
   {
     ForestView aView = new ForestView(this);
-    JFrame aWindow = new JFrame("forest.txt");
+    JFrame aWindow = new JFrame(aFileName);
     aView.setLayout(null);
     aWindow.setLayout(null); // test
+    aWindow.getRootPane().setDoubleBuffered(true);
+    aView.setDoubleBuffered(true);
 
     aWindow.setMinimumSize(new Dimension(400, 300));
     aWindow.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -61,11 +64,10 @@ public class ForestModel extends mvc.Model
   /**
    * ファイルの名前からノードの集合を作成する。
    */
-  public void createNodes(String aFileName)
+  public void createNodes(File aFile)
   {
     try
       {
-        File aFile = new File(aFileName);
         FileReader aFileReader = new FileReader(aFile);
         BufferedReader aBufferedReader = new BufferedReader(aFileReader);
         String aLine;

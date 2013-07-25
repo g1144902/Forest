@@ -278,9 +278,15 @@ import javax.swing.JFileChooser;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 
+/**
+ * プロジェクトForestの実行クラス
+ */
 public class Example extends Object
 {
   
+  /**
+   * ファイルをユーザーに選択してもらいそれを元にモデルを作る
+   */
   public static void main(String[] args)
   {
     JFileChooser chooser = new JFileChooser();
@@ -975,6 +981,9 @@ import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 
 
+/**
+ * MVCにおけるモデル
+ */
 public class ForestModel extends mvc.Model implements Runnable
 {
 
@@ -983,12 +992,24 @@ public class ForestModel extends mvc.Model implements Runnable
    */
   private ArrayList<ForestNode> forestNodes;
 
+  /**
+   * 現在のスクロール量
+   */
   private Point offset;
 
+  /**
+   * 一つ前のスクロール量
+   */
   private Point oldOffset;
 
+  /**
+   * 右クリックをした時に表示されるメニュー
+   */
   private JPopupMenu popupMenu;
 
+  /**
+   * ファイルからモデルを形成
+   */
   public ForestModel(File aFile)
   {
     super();
@@ -1000,6 +1021,10 @@ public class ForestModel extends mvc.Model implements Runnable
     this.perform();
   }
 
+  /**
+   * ウィンドウを開きビューやメニューを設定する
+   * ビューにノードのラベルを追加する
+   */
   public void open(String aFileName)
   {
     ForestController aController = new ForestController();
@@ -1093,6 +1118,9 @@ public class ForestModel extends mvc.Model implements Runnable
     return;
   }
 
+  /**
+   * 待ち時間無しで整列させる
+   */
   public void perform()
   {
     int rootRows = 0;
@@ -1108,6 +1136,9 @@ public class ForestModel extends mvc.Model implements Runnable
     return;
   }
 
+  /**
+   * 待ち時間ありで整列させるスレッドから呼ばれること想定
+   */
   public void run()
   {
     int rootRows = 0;
@@ -1123,6 +1154,9 @@ public class ForestModel extends mvc.Model implements Runnable
     return;
   }
 
+  /**
+   * 再帰的にノードを整列させる
+   */
   public void recursiveNodeAligning(int line, ForestNode aNode, int waitTime)
   {
     double aNodeX, aNodeY;
@@ -1187,6 +1221,9 @@ public class ForestModel extends mvc.Model implements Runnable
     return;
   }
 
+  /**
+   * ノード全体をスクロール量分移動させる
+   */
   public void scrollNodes(Point aPoint)
   {
     offset = aPoint;
@@ -1202,6 +1239,9 @@ public class ForestModel extends mvc.Model implements Runnable
     oldOffset = new Point(offset);
   }
 
+  /**
+   * ノードを整列する前の状態に戻す
+   */
   public void resetNodes()
   {
     int aNodeX = 0, aNodeY = Constants.VERTICAL_INTERVAL;
@@ -1240,6 +1280,9 @@ public class ForestModel extends mvc.Model implements Runnable
     return forestNodes;
   }
 
+  /**
+   * 右クリック用ポップアップメニューを返す
+   */
   public JPopupMenu getPopupMenu()
   {
     return popupMenu;
@@ -1256,15 +1299,23 @@ import java.awt.Point;
 import java.awt.Graphics;
 import javax.swing.JLabel;
 
-
+/**
+ * MVCにおけるビュー
+ */
 public class ForestView extends mvc.View
 {
 
+  /**
+   * モデルとコントローラーからビューを形成
+   */
   public ForestView(ForestModel aModel, ForestController aController)
   {
     super(aModel, aController);    
   }
 
+  /**
+   * 自身を白で塗りつぶしノードをスクロール量分スクロール
+   */
   public void paintComponent(Graphics aGraphics)
   {
     int width = this.getWidth();
@@ -1278,6 +1329,9 @@ public class ForestView extends mvc.View
     return;
   }
 
+  /**
+   * 自身の子コンポーネントであるノードを描写
+   */
   public void paintChildren(Graphics aGraphics)
   {
     super.paintChildren(aGraphics);
@@ -1323,14 +1377,23 @@ import javax.swing.event.MouseInputAdapter;
 import javax.swing.JPopupMenu;
 
 
+/**
+ * MVCにおけるコントローラー
+ */
 public class ForestController extends mvc.Controller implements ActionListener
 {
   
+  /**
+   * スーパークラスのコンストラクタを呼び出すだけ
+   */
   public ForestController()
   {
     super();
   }
   
+  /**
+   * クリックを判別し右クリックならポップアップメニューを表示
+   */
   public void mouseClicked(MouseEvent aMouseEvent)
   {
     Point aPoint = aMouseEvent.getPoint();
@@ -1339,13 +1402,12 @@ public class ForestController extends mvc.Controller implements ActionListener
         ForestModel aModel = (ForestModel) model;
         aModel.getPopupMenu().show(aMouseEvent.getComponent(), aPoint.x, aPoint.y);
       }
-    else
-      {
-        aPoint.translate(view.scrollAmount().x, view.scrollAmount().y);
-      }
     return;
   }
 
+  /**
+   * メニューが押されたとき新たなスレッドを作りアニメーションを実行させる
+   */
   public void actionPerformed(ActionEvent anActionEvent)
   {
     ForestModel aModel = (ForestModel) model;
@@ -1368,14 +1430,20 @@ import javax.swing.JLabel;
 import javax.swing.border.LineBorder;
 
 
+/**
+ * 木構造の葉にあたるノード
+ */
 public class ForestNode extends Object
 {
 
   /**
-   * 自身を描画するために View に渡すラベル
+   * 自身を描画するためにビューに渡すラベル
    */
   private JLabel label;
 
+  /**
+   * 自身のコントローラー
+   */
   private ForestNodeController controller;
 
   /**
@@ -1383,14 +1451,29 @@ public class ForestNode extends Object
    */
   private Dimension size;
 
+  /**
+   * 自身の親ノードの集合
+   */
   private ArrayList<ForestNode> parents;
 
+  /**
+   * 自身の子ノードの集合
+   */
   private TreeMap<Integer, ForestNode> children;
 
+  /**
+   * 自身をルートとした時のツリーの大きさ
+   */
   private int rows;
 
+  /**
+   * ルートから見た自身の深さ
+   */
   private int depth;
 
+  /**
+   * テキストから自身を形成
+   */
   public ForestNode(String aText)
   {
     label = new JLabel(aText);
@@ -1433,12 +1516,18 @@ public class ForestNode extends Object
     return;
   }
 
+  /**
+   * 親ノードを追加する
+   */
   public void addParent(ForestNode aNode)
   {
     parents.add(aNode);
     return;
   }
 
+  /**
+   * 自身の束縛する親ノードの中で最も深い親ノードを返す
+   */
   public ForestNode getParent()
   {
     ForestNode aParent = null;
@@ -1452,22 +1541,34 @@ public class ForestNode extends Object
     return aParent;
   }
 
+  /**
+   * 親ノードの集合を返す
+   */
   public ArrayList<ForestNode> getParents()
   {
     return parents;
   }
 
+  /**
+   * 子ノードを追加
+   */
   public void addChild(int anIndex, ForestNode aNode)
   {
     children.put(anIndex, aNode);
     return;
   }
 
+  /**
+   * 子ノードの集合を返す
+   */
   public TreeMap<Integer, ForestNode> getChildren()
   {
     return children;
   }
 
+  /**
+   * 再帰的に大きさを設定する
+   */
   public void recursiveInitRows()
   {
     rows = 0;
@@ -1486,6 +1587,9 @@ public class ForestNode extends Object
     return;
   }
 
+  /**
+   * 再帰的に深さを設定する
+   */
   public void recursiveInitDepth(int parentDepth)
   {
     int aDepth = parentDepth + 1;
@@ -1507,16 +1611,25 @@ public class ForestNode extends Object
     return;
   }
 
+  /**
+   * 大きさを返す
+   */
   public int getRows()
   {
     return rows;
   }
 
+  /**
+   * 深さを返す
+   */
   public int getDepth()
   {
     return depth;
   }
 
+  /**
+   * 自身がルートであるかを判定する
+   */
   public boolean isRoot()
   {
     if (parents.isEmpty())
@@ -1539,23 +1652,38 @@ import javax.swing.JLabel;
 import javax.swing.event.MouseInputAdapter;
 
 
+/**
+ * ノードのコントローラー
+ */
 public class ForestNodeController extends MouseInputAdapter
 {
 
+  /**
+   * 自身の相手となるラベル
+   */
   private JLabel label;
 
+  /**
+   * このクラスのコンストラクタ
+   */
   public ForestNodeController()
   {
     super();
     label = null;
   }
 
+  /**
+   * マウスのクリックに反応し自身の相手となるラベルの名前を出力
+   */
   public void mouseClicked(MouseEvent aMouseEvent)
   {
     System.out.println(label.getText());
     return;
   }
 
+  /**
+   * ラベルをセットする
+   */
   public void setLabel(JLabel aLabel)
   {
     label = aLabel;
@@ -1569,13 +1697,25 @@ public class ForestNodeController extends MouseInputAdapter
 <pre>package forest;
 
 
+/**
+ * 定数の集合
+ */
 public class Constants
 {
 
+  /**
+   * ノードの中に表示する文字のフォントのサイズ
+   */
   public static int FONT_SIZE = 12;
 
+  /**
+   * ノードとノードの横方向の間隔
+   */
   public static int HORIZONTAL_INTERVAL = 25;
 
+  /**
+   * ノードとノードの縦方向の間隔
+   */
   public static int VERTICAL_INTERVAL = 2;
 
 }</pre>

@@ -50,11 +50,14 @@ public class ForestView extends mvc.View
             aNodeX = aNodeLabel.getX();
             aNodeY = aNodeLabel.getY() + aNodeLabel.getHeight() / 2;
             
-            aParentLabel = aNode.getParent().getLabel();
-            aParentX = aParentLabel.getX() + aParentLabel.getWidth();
-            aParentY = aParentLabel.getY() + aParentLabel.getHeight() / 2;
+            for (ForestNode aParent : aNode.getParents())
+              {
+                aParentLabel = aParent.getLabel();
+                aParentX = aParentLabel.getX() + aParentLabel.getWidth();
+                aParentY = aParentLabel.getY() + aParentLabel.getHeight() / 2;
             
-            offsetGraphics.drawLine(aNodeX, aNodeY, aParentX, aParentY);
+                offsetGraphics.drawLine(aNodeX, aNodeY, aParentX, aParentY);
+              }
           }
       }
     Point offset = this.scrollAmount();

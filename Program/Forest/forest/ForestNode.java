@@ -1,6 +1,7 @@
 package forest;
 
 
+import java.util.ArrayList;
 import java.util.TreeMap;
 import java.awt.Font;
 import java.awt.Color;
@@ -22,20 +23,24 @@ public class ForestNode extends Object
    */
   private Dimension size;
 
-  private ForestNode parent;
+  private ArrayList<ForestNode> parents;
 
   private TreeMap<Integer, ForestNode> children;
 
   private int rows;
 
+  private int depth;
+
   public ForestNode(String aText)
   {
     label = new JLabel(aText);
     label.setBorder(new LineBorder(Color.black));
-    label.setFont(new Font("Serif", Font.PLAIN, 12));
+    label.setFont(new Font("Serif", Font.PLAIN, Constants.FONT_SIZE));
     this.adjustLabelSize();
 
+    parents = new ArrayList<ForestNode>();
     children = new TreeMap<Integer, ForestNode>();
+    depth = 0;
   }
 
   /**
@@ -65,15 +70,28 @@ public class ForestNode extends Object
     return;
   }
 
-  public void setParent(ForestNode aNode)
+  public void addParent(ForestNode aNode)
   {
-    parent = aNode;
+    parents.add(aNode);
     return;
   }
 
   public ForestNode getParent()
   {
-    return parent;
+    ForestNode aParent = null;
+    for (ForestNode aNode : parents)
+      {
+        if (aParent == null || aNode.getDepth() > aParent.getDepth())
+          {
+            aParent = aNode;
+          }
+      }
+    return aParent;
+  }
+
+  public ArrayList<ForestNode> getParents()
+  {
+    return parents;
   }
 
   public void addChild(int anIndex, ForestNode aNode)
@@ -105,14 +123,40 @@ public class ForestNode extends Object
     return;
   }
 
+  public void recursiveInitDepth(int parentDepth)
+  {
+    int aDepth = parentDepth + 1;
+    if (depth != 0)
+      {
+        if (aDepth < depth)
+          {
+            return;
+          }
+      }
+    depth = aDepth;
+    if (!children.isEmpty())
+      {
+        for (ForestNode aChild : children.values())
+          {
+            aChild.recursiveInitDepth(depth);
+          }
+      }
+    return;
+  }
+
   public int getRows()
   {
     return rows;
   }
 
+  public int getDepth()
+  {
+    return depth;
+  }
+
   public boolean isRoot()
   {
-    if (parent == null)
+    if (parents.isEmpty())
       {
         return true;
       }

@@ -23,12 +23,12 @@ public class Example extends Object
     // }
 
     //ForestModel aModel = new ForestModel(chooser.getSelectedFile());
-    ForestModel aModel = new ForestModel(new File("./texts/forest.txt"));
+    ForestModel aModel = new ForestModel(new File("./texts/semilattice.txt"));
 
     // ArrayList<ForestNode> aList = aModel.getForestNodes();
     // for (ForestNode aNode : aList)
     //   {
-    //     System.out.print(aNode.getLabel().getText() + " - ");
+    //     System.out.print(aNode.getLabel().getText() + " " + aNode.getDepth() + " - ");
     //     for (ForestNode aChild : aNode.getChildren().values())
     //       {
     //         System.out.print(aChild.getLabel().getText() + " - ");

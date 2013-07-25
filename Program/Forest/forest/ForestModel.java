@@ -51,7 +51,7 @@ public class ForestModel extends mvc.Model
             maxHeight = aLabel.getHeight();
           }
       }
-    int maximumWidth = forestNodes.size() * maxWidth + 20 * (forestNodes.size() - 1);
+    int maximumWidth = forestNodes.size() * maxWidth + Constants.HORIZONTAL_INTERVAL * (forestNodes.size() - 1);
     int maximumHeight = forestNodes.size() * maxHeight + forestNodes.size();
     this.picture(new BufferedImage(maximumWidth, maximumHeight, BufferedImage.TYPE_INT_BGR));
 
@@ -61,13 +61,13 @@ public class ForestModel extends mvc.Model
     aWindow.setSize(800, 600);
     aWindow.setVisible(true);
 
-    int x = 1, y = 1;
+    int aNodeX = 0, aNodeY = Constants.VERTICAL_INTERVAL;
     for (ForestNode aNode : forestNodes)
       {
-        aNode.moveTo(x, y);
+        aNode.moveTo(aNodeX, aNodeY);
         JLabel aLabel = aNode.getLabel();
         aView.add(aLabel);
-        y += aLabel.getHeight() + 1;
+        aNodeY += aLabel.getHeight() + Constants.VERTICAL_INTERVAL;
       }
     return;
   }
@@ -109,7 +109,7 @@ public class ForestModel extends mvc.Model
                     aChild = this.getForestNode(childIndex);
 
                     aParent.addChild(childIndex, aChild);
-                    aChild.setParent(aParent);
+                    aChild.addParent(aParent);
                   }
               }
           }
@@ -124,7 +124,17 @@ public class ForestModel extends mvc.Model
     catch (IOException anException)
       {
         System.out.println(anException);
-      } 
+      }
+    
+    int rootDepth = 0;
+    for (ForestNode aNode : forestNodes)
+      {
+        if (aNode.isRoot())
+          {
+            aNode.recursiveInitRows();
+            aNode.recursiveInitDepth(rootDepth);
+          }
+      }
     return;
   }
 
@@ -135,9 +145,8 @@ public class ForestModel extends mvc.Model
       {
         if (aNode.isRoot())
           {
-            aNode.recursiveInitRows();
             this.recursiveNodeAligning(rootRows, aNode);
-            rootRows += aNode.getRows() + 1;
+            rootRows += aNode.getRows();
           }
       }
     return;
@@ -152,13 +161,13 @@ public class ForestModel extends mvc.Model
       {
         JLabel aParentLabel;
         aParentLabel = aNode.getParent().getLabel();
-        aNodeX = aParentLabel.getX() + aParentLabel.getWidth() + 20;
-        aNodeY = aParentLabel.getY() + aParentLabel.getHeight() * line + line;
+        aNodeX = aParentLabel.getX() + aParentLabel.getWidth() + Constants.HORIZONTAL_INTERVAL;
+        aNodeY = aParentLabel.getY() + aParentLabel.getHeight() * line + line * Constants.VERTICAL_INTERVAL;
       }
     else
       {
         aNodeX = aLabel.getX();
-        aNodeY = line * aLabel.getHeight() + line;
+        aNodeY = line * aLabel.getHeight() + line * Constants.VERTICAL_INTERVAL;
       }
     aNode.moveTo((int) aNodeX, (int) aNodeY);
     this.changed();
@@ -175,9 +184,12 @@ public class ForestModel extends mvc.Model
     int childLine = 0;
     for (ForestNode aChild : aNode.getChildren().values())
       {
-        this.recursiveNodeAligning(childLine, aChild);
-        childLine += aChild.getRows() - 1;
-        childLine++;
+        if (aChild.getParent().equals(aNode))
+          {
+            this.recursiveNodeAligning(childLine, aChild);
+            childLine += aChild.getRows() - 1;
+            childLine++;
+          }
       }
     
     aNodeX = aLabel.getX();

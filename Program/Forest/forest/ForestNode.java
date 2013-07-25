@@ -18,6 +18,8 @@ public class ForestNode extends Object
    */
   private JLabel label;
 
+  private ForestNodeController controller;
+
   /**
    * 自身のサイズ
    */
@@ -37,6 +39,9 @@ public class ForestNode extends Object
     label.setBorder(new LineBorder(Color.black));
     label.setFont(new Font("Serif", Font.PLAIN, Constants.FONT_SIZE));
     this.adjustLabelSize();
+
+    controller = new ForestNodeController();
+    controller.setLabel(label);
 
     parents = new ArrayList<ForestNode>();
     children = new TreeMap<Integer, ForestNode>();

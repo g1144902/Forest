@@ -8,6 +8,7 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.awt.Color;
+import java.awt.Point;
 import java.awt.Dimension;
 import java.awt.image.BufferedImage;
 import javax.swing.JFrame;
@@ -22,10 +23,16 @@ public class ForestModel extends mvc.Model
    */
   private ArrayList<ForestNode> forestNodes;
 
+  private Point offset;
+
+  private Point oldOffset;
+
   public ForestModel(File aFile)
   {
     super();
     forestNodes = new ArrayList<ForestNode>();
+    offset = new Point(0, 0);
+    oldOffset = new Point(0, 0);
     this.createNodes(aFile);
     this.open(aFile.getName());
     this.perform();
@@ -36,24 +43,6 @@ public class ForestModel extends mvc.Model
     ForestView aView = new ForestView(this);
     JFrame aWindow = new JFrame(aFileName);
     aView.setLayout(null);
-
-    int maxWidth = 0;
-    int maxHeight = 0;
-    for (ForestNode aNode : forestNodes)
-      {
-        JLabel aLabel = aNode.getLabel();
-        if (aLabel.getWidth() > maxWidth)
-          {
-            maxWidth = aLabel.getWidth();
-          }
-        if (aLabel.getHeight() > maxHeight)
-          {
-            maxHeight = aLabel.getHeight();
-          }
-      }
-    int maximumWidth = forestNodes.size() * maxWidth + Constants.HORIZONTAL_INTERVAL * (forestNodes.size() - 1);
-    int maximumHeight = forestNodes.size() * maxHeight + forestNodes.size();
-    this.picture(new BufferedImage(maximumWidth, maximumHeight, BufferedImage.TYPE_INT_BGR));
 
     aWindow.getContentPane().add(aView);
     aWindow.setMinimumSize(new Dimension(400, 300));
@@ -167,7 +156,7 @@ public class ForestModel extends mvc.Model
     else
       {
         aNodeX = aLabel.getX();
-        aNodeY = line * aLabel.getHeight() + line * Constants.VERTICAL_INTERVAL;
+        aNodeY = line * aLabel.getHeight() + line * Constants.VERTICAL_INTERVAL - offset.y;
       }
     aNode.moveTo((int) aNodeX, (int) aNodeY);
     this.changed();
@@ -214,6 +203,21 @@ public class ForestModel extends mvc.Model
       }
 
     return;
+  }
+
+  public void scrollNodes(Point aPoint)
+  {
+    offset = aPoint;
+    if (!offset.equals(oldOffset))
+      {
+        for (ForestNode aNode : forestNodes)
+          {
+            Point nodePoint = aNode.getLabel().getLocation();
+            nodePoint.translate(-offset.x + oldOffset.x, -offset.y + oldOffset.y);
+            aNode.getLabel().setLocation(nodePoint);
+          }
+      }
+    oldOffset = new Point(offset);
   }
 
   /**

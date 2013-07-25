@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.awt.Color;
 import java.awt.Point;
 import java.awt.Graphics;
-import java.awt.image.BufferedImage;
 import javax.swing.JLabel;
 
 

@@ -11,12 +11,9 @@ import javax.swing.JLabel;
 public class ForestView extends mvc.View
 {
 
-  private Point oldOffset;
-
-  public ForestView(ForestModel aModel)
+  public ForestView(ForestModel aModel, ForestController aController)
   {
-    super(aModel);
-    oldOffset = new Point(0, 0);
+    super(aModel, aController);    
   }
 
   public void paintComponent(Graphics aGraphics)
@@ -29,7 +26,6 @@ public class ForestView extends mvc.View
     ForestModel aModel = (ForestModel) model;
     Point aPoint = this.scrollAmount();
     aModel.scrollNodes(aPoint);
-
     return;
   }
 

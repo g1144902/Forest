@@ -12,9 +12,11 @@ import java.awt.Point;
 import java.awt.Dimension;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JMenuItem;
+import javax.swing.JPopupMenu;
 
 
-public class ForestModel extends mvc.Model
+public class ForestModel extends mvc.Model implements Runnable
 {
 
   /**
@@ -25,6 +27,8 @@ public class ForestModel extends mvc.Model
   private Point offset;
 
   private Point oldOffset;
+
+  private JPopupMenu popupMenu;
 
   public ForestModel(File aFile)
   {
@@ -39,7 +43,8 @@ public class ForestModel extends mvc.Model
 
   public void open(String aFileName)
   {
-    ForestView aView = new ForestView(this);
+    ForestController aController = new ForestController();
+    ForestView aView = new ForestView(this, aController);
     JFrame aWindow = new JFrame(aFileName);
     aView.setLayout(null);
 
@@ -49,14 +54,17 @@ public class ForestModel extends mvc.Model
     aWindow.setSize(800, 600);
     aWindow.setVisible(true);
 
-    int aNodeX = 0, aNodeY = Constants.VERTICAL_INTERVAL;
+    popupMenu = new JPopupMenu();
+    JMenuItem aMenuItem = new JMenuItem("Algorithm Animation");
+    aMenuItem.addActionListener(aController);
+    popupMenu.add(aMenuItem);
+
     for (ForestNode aNode : forestNodes)
       {
-        aNode.moveTo(aNodeX, aNodeY);
         JLabel aLabel = aNode.getLabel();
         aView.add(aLabel);
-        aNodeY += aLabel.getHeight() + Constants.VERTICAL_INTERVAL;
       }
+
     return;
   }
 
@@ -129,18 +137,34 @@ public class ForestModel extends mvc.Model
   public void perform()
   {
     int rootRows = 0;
+    this.resetNodes();
     for (ForestNode aNode : forestNodes)
       {
         if (aNode.isRoot())
           {
-            this.recursiveNodeAligning(rootRows, aNode);
+            this.recursiveNodeAligning(rootRows, aNode, 0);
             rootRows += aNode.getRows();
           }
       }
     return;
   }
 
-  public void recursiveNodeAligning(int line, ForestNode aNode)
+  public void run()
+  {
+    int rootRows = 0;
+    this.resetNodes();
+    for (ForestNode aNode : forestNodes)
+      {
+        if (aNode.isRoot())
+          {
+            this.recursiveNodeAligning(rootRows, aNode, 50);
+            rootRows += aNode.getRows();
+          }
+      }
+    return;
+  }
+
+  public void recursiveNodeAligning(int line, ForestNode aNode, int waitTime)
   {
     double aNodeX, aNodeY;
     JLabel aLabel;
@@ -161,7 +185,7 @@ public class ForestModel extends mvc.Model
     this.changed();
     try
       {
-        Thread.sleep(50);
+        Thread.sleep(waitTime);
       }
     catch (InterruptedException anException)
       {
@@ -174,7 +198,7 @@ public class ForestModel extends mvc.Model
       {
         if (aChild.getParent().equals(aNode))
           {
-            this.recursiveNodeAligning(childLine, aChild);
+            this.recursiveNodeAligning(childLine, aChild, waitTime);
             childLine += aChild.getRows() - 1;
             childLine++;
           }
@@ -183,17 +207,17 @@ public class ForestModel extends mvc.Model
     aNodeX = aLabel.getX();
     if ((aNode.getRows() % 2) == 0)
       {
-        aNodeY = aLabel.getY() + (aNode.getRows() / 2 - 0.5) * aLabel.getHeight() + aNode.getRows() / 2;
+        aNodeY = aLabel.getY() + (aNode.getRows() / 2 - 0.5) * aLabel.getHeight() + aNode.getRows() / 2 * Constants.VERTICAL_INTERVAL;
       }
     else
       {
-        aNodeY = aLabel.getY() + (aNode.getRows() / 2) * aLabel.getHeight() + aNode.getRows() / 2;
+        aNodeY = aLabel.getY() + (aNode.getRows() / 2) * aLabel.getHeight() + aNode.getRows() / 2 * Constants.VERTICAL_INTERVAL;
       }
     aNode.moveTo((int) aNodeX, (int) aNodeY);
     this.changed();
     try
       {
-        Thread.sleep(50);
+        Thread.sleep(waitTime);
       }
     catch (InterruptedException anException)
       {
@@ -217,6 +241,18 @@ public class ForestModel extends mvc.Model
           }
       }
     oldOffset = new Point(offset);
+  }
+
+  public void resetNodes()
+  {
+    int aNodeX = 0, aNodeY = Constants.VERTICAL_INTERVAL;
+    for (ForestNode aNode : forestNodes)
+      {
+        aNode.moveTo(aNodeX, aNodeY);
+        JLabel aLabel = aNode.getLabel();
+        aNodeY += aLabel.getHeight() + Constants.VERTICAL_INTERVAL;
+      }
+    return;
   }
 
   /**
@@ -245,4 +281,9 @@ public class ForestModel extends mvc.Model
     return forestNodes;
   }
 
+  public JPopupMenu getPopupMenu()
+  {
+    return popupMenu;
+  }
+  
 }

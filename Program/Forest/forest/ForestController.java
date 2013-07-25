@@ -10,14 +10,23 @@ import javax.swing.event.MouseInputAdapter;
 import javax.swing.JPopupMenu;
 
 
+/**
+ * MVCにおけるコントローラー
+ */
 public class ForestController extends mvc.Controller implements ActionListener
 {
   
+  /**
+   * スーパークラスのコンストラクタを呼び出すだけ
+   */
   public ForestController()
   {
     super();
   }
   
+  /**
+   * クリックを判別し右クリックならポップアップメニューを表示
+   */
   public void mouseClicked(MouseEvent aMouseEvent)
   {
     Point aPoint = aMouseEvent.getPoint();
@@ -26,13 +35,12 @@ public class ForestController extends mvc.Controller implements ActionListener
         ForestModel aModel = (ForestModel) model;
         aModel.getPopupMenu().show(aMouseEvent.getComponent(), aPoint.x, aPoint.y);
       }
-    else
-      {
-        aPoint.translate(view.scrollAmount().x, view.scrollAmount().y);
-      }
     return;
   }
 
+  /**
+   * メニューが押されたとき新たなスレッドを作りアニメーションを実行させる
+   */
   public void actionPerformed(ActionEvent anActionEvent)
   {
     ForestModel aModel = (ForestModel) model;

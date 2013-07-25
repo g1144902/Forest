@@ -10,14 +10,20 @@ import javax.swing.JLabel;
 import javax.swing.border.LineBorder;
 
 
+/**
+ * 木構造の葉にあたるノード
+ */
 public class ForestNode extends Object
 {
 
   /**
-   * 自身を描画するために View に渡すラベル
+   * 自身を描画するためにビューに渡すラベル
    */
   private JLabel label;
 
+  /**
+   * 自身のコントローラー
+   */
   private ForestNodeController controller;
 
   /**
@@ -25,14 +31,29 @@ public class ForestNode extends Object
    */
   private Dimension size;
 
+  /**
+   * 自身の親ノードの集合
+   */
   private ArrayList<ForestNode> parents;
 
+  /**
+   * 自身の子ノードの集合
+   */
   private TreeMap<Integer, ForestNode> children;
 
+  /**
+   * 自身をルートとした時のツリーの大きさ
+   */
   private int rows;
 
+  /**
+   * ルートから見た自身の深さ
+   */
   private int depth;
 
+  /**
+   * テキストから自身を形成
+   */
   public ForestNode(String aText)
   {
     label = new JLabel(aText);
@@ -75,12 +96,18 @@ public class ForestNode extends Object
     return;
   }
 
+  /**
+   * 親ノードを追加する
+   */
   public void addParent(ForestNode aNode)
   {
     parents.add(aNode);
     return;
   }
 
+  /**
+   * 自身の束縛する親ノードの中で最も深い親ノードを返す
+   */
   public ForestNode getParent()
   {
     ForestNode aParent = null;
@@ -94,22 +121,34 @@ public class ForestNode extends Object
     return aParent;
   }
 
+  /**
+   * 親ノードの集合を返す
+   */
   public ArrayList<ForestNode> getParents()
   {
     return parents;
   }
 
+  /**
+   * 子ノードを追加
+   */
   public void addChild(int anIndex, ForestNode aNode)
   {
     children.put(anIndex, aNode);
     return;
   }
 
+  /**
+   * 子ノードの集合を返す
+   */
   public TreeMap<Integer, ForestNode> getChildren()
   {
     return children;
   }
 
+  /**
+   * 再帰的に大きさを設定する
+   */
   public void recursiveInitRows()
   {
     rows = 0;
@@ -128,6 +167,9 @@ public class ForestNode extends Object
     return;
   }
 
+  /**
+   * 再帰的に深さを設定する
+   */
   public void recursiveInitDepth(int parentDepth)
   {
     int aDepth = parentDepth + 1;
@@ -149,16 +191,25 @@ public class ForestNode extends Object
     return;
   }
 
+  /**
+   * 大きさを返す
+   */
   public int getRows()
   {
     return rows;
   }
 
+  /**
+   * 深さを返す
+   */
   public int getDepth()
   {
     return depth;
   }
 
+  /**
+   * 自身がルートであるかを判定する
+   */
   public boolean isRoot()
   {
     if (parents.isEmpty())

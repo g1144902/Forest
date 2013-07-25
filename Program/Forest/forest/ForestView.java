@@ -7,15 +7,23 @@ import java.awt.Point;
 import java.awt.Graphics;
 import javax.swing.JLabel;
 
-
+/**
+ * MVCにおけるビュー
+ */
 public class ForestView extends mvc.View
 {
 
+  /**
+   * モデルとコントローラーからビューを形成
+   */
   public ForestView(ForestModel aModel, ForestController aController)
   {
     super(aModel, aController);    
   }
 
+  /**
+   * 自身を白で塗りつぶしノードをスクロール量分スクロール
+   */
   public void paintComponent(Graphics aGraphics)
   {
     int width = this.getWidth();
@@ -29,6 +37,9 @@ public class ForestView extends mvc.View
     return;
   }
 
+  /**
+   * 自身の子コンポーネントであるノードを描写
+   */
   public void paintChildren(Graphics aGraphics)
   {
     super.paintChildren(aGraphics);

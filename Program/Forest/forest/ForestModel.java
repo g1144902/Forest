@@ -16,6 +16,9 @@ import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 
 
+/**
+ * MVCにおけるモデル
+ */
 public class ForestModel extends mvc.Model implements Runnable
 {
 
@@ -24,12 +27,24 @@ public class ForestModel extends mvc.Model implements Runnable
    */
   private ArrayList<ForestNode> forestNodes;
 
+  /**
+   * 現在のスクロール量
+   */
   private Point offset;
 
+  /**
+   * 一つ前のスクロール量
+   */
   private Point oldOffset;
 
+  /**
+   * 右クリックをした時に表示されるメニュー
+   */
   private JPopupMenu popupMenu;
 
+  /**
+   * ファイルからモデルを形成
+   */
   public ForestModel(File aFile)
   {
     super();
@@ -41,6 +56,10 @@ public class ForestModel extends mvc.Model implements Runnable
     this.perform();
   }
 
+  /**
+   * ウィンドウを開きビューやメニューを設定する
+   * ビューにノードのラベルを追加する
+   */
   public void open(String aFileName)
   {
     ForestController aController = new ForestController();
@@ -134,6 +153,9 @@ public class ForestModel extends mvc.Model implements Runnable
     return;
   }
 
+  /**
+   * 待ち時間無しで整列させる
+   */
   public void perform()
   {
     int rootRows = 0;
@@ -149,6 +171,9 @@ public class ForestModel extends mvc.Model implements Runnable
     return;
   }
 
+  /**
+   * 待ち時間ありで整列させるスレッドから呼ばれること想定
+   */
   public void run()
   {
     int rootRows = 0;
@@ -164,6 +189,9 @@ public class ForestModel extends mvc.Model implements Runnable
     return;
   }
 
+  /**
+   * 再帰的にノードを整列させる
+   */
   public void recursiveNodeAligning(int line, ForestNode aNode, int waitTime)
   {
     double aNodeX, aNodeY;
@@ -228,6 +256,9 @@ public class ForestModel extends mvc.Model implements Runnable
     return;
   }
 
+  /**
+   * ノード全体をスクロール量分移動させる
+   */
   public void scrollNodes(Point aPoint)
   {
     offset = aPoint;
@@ -243,6 +274,9 @@ public class ForestModel extends mvc.Model implements Runnable
     oldOffset = new Point(offset);
   }
 
+  /**
+   * ノードを整列する前の状態に戻す
+   */
   public void resetNodes()
   {
     int aNodeX = 0, aNodeY = Constants.VERTICAL_INTERVAL;
@@ -281,6 +315,9 @@ public class ForestModel extends mvc.Model implements Runnable
     return forestNodes;
   }
 
+  /**
+   * 右クリック用ポップアップメニューを返す
+   */
   public JPopupMenu getPopupMenu()
   {
     return popupMenu;

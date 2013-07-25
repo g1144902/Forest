@@ -269,10 +269,29 @@ th {
  </ul>
 </ul>
 <div class="belt"><h3><a name="Example">Example（メインクラス）</a></h3></div>
-<pre>
+<pre>package forest;
 
 
-</pre>
+import java.util.ArrayList;
+import java.io.File;
+import javax.swing.JFileChooser;
+import javax.swing.filechooser.FileNameExtensionFilter;
+
+
+public class Example extends Object
+{
+  
+  public static void main(String[] args)
+  {
+    JFileChooser chooser = new JFileChooser();
+    FileNameExtensionFilter filter = new FileNameExtensionFilter("Text File", "txt");
+    chooser.setFileFilter(filter);
+    chooser.showOpenDialog(null);
+
+    ForestModel aModel = new ForestModel(chooser.getSelectedFile());
+  }
+
+}</pre>
 <div class="belt"><h3><a name="Model">Model（モデル）</a></h3></div>
 <pre>package forest;
 
@@ -938,50 +957,628 @@ public class Controller extends MouseInputAdapter implements MouseWheelListener
 	}
 }</pre>
 <div class="belt"><h3><a name="ForestModel">ForestModel（フォレストモデル）</a></h3></div>
-<pre>
+<pre>package forest;
 
 
+import java.util.ArrayList;
+import java.io.File;
+import java.io.FileReader;
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.awt.Color;
+import java.awt.Point;
+import java.awt.Dimension;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JMenuItem;
+import javax.swing.JPopupMenu;
 
 
+public class ForestModel extends mvc.Model implements Runnable
+{
 
-</pre>
+  /**
+   * ノードの集合
+   */
+  private ArrayList<ForestNode> forestNodes;
+
+  private Point offset;
+
+  private Point oldOffset;
+
+  private JPopupMenu popupMenu;
+
+  public ForestModel(File aFile)
+  {
+    super();
+    forestNodes = new ArrayList<ForestNode>();
+    offset = new Point(0, 0);
+    oldOffset = new Point(0, 0);
+    this.createNodes(aFile);
+    this.open(aFile.getName());
+    this.perform();
+  }
+
+  public void open(String aFileName)
+  {
+    ForestController aController = new ForestController();
+    ForestView aView = new ForestView(this, aController);
+    JFrame aWindow = new JFrame(aFileName);
+    aView.setLayout(null);
+
+    aWindow.getContentPane().add(aView);
+    aWindow.setMinimumSize(new Dimension(400, 300));
+    aWindow.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    aWindow.setSize(800, 600);
+    aWindow.setVisible(true);
+
+    popupMenu = new JPopupMenu();
+    JMenuItem aMenuItem = new JMenuItem("Algorithm Animation");
+    aMenuItem.addActionListener(aController);
+    popupMenu.add(aMenuItem);
+
+    for (ForestNode aNode : forestNodes)
+      {
+        JLabel aLabel = aNode.getLabel();
+        aView.add(aLabel);
+      }
+
+    return;
+  }
+
+  /**
+   * ファイルの名前からノードの集合を作成する。
+   */
+  public void createNodes(File aFile)
+  {
+    try
+      {
+        FileReader aFileReader = new FileReader(aFile);
+        BufferedReader aBufferedReader = new BufferedReader(aFileReader);
+        String aLine;
+        while ((aLine = aBufferedReader.readLine()) != null)
+          {
+            if (aLine.equals("nodes:"))
+              {
+                String[] anElement;
+                while (!(aLine = aBufferedReader.readLine()).equals("branches:"))
+                  {
+                    anElement = aLine.split(", ");
+                    ForestNode aNode = new ForestNode(anElement[1]);
+                    this.addForestNode(aNode);
+                  }
+              }
+            if (aLine.equals("branches:"))
+              {
+                String[] indexes;
+                int parentIndex, childIndex;
+                ForestNode aParent, aChild;
+                while ((aLine = aBufferedReader.readLine()) != null)
+                  {
+                    indexes = aLine.split(", ");
+                    parentIndex = Integer.parseInt(indexes[0]) - 1;
+                    childIndex = Integer.parseInt(indexes[1]) - 1;
+
+                    aParent = this.getForestNode(parentIndex);
+                    aChild = this.getForestNode(childIndex);
+
+                    aParent.addChild(childIndex, aChild);
+                    aChild.addParent(aParent);
+                  }
+              }
+          }
+            
+        aBufferedReader.close();
+        aFileReader.close();
+      }
+    catch (FileNotFoundException anException)
+      {
+        System.out.println(anException);
+      }
+    catch (IOException anException)
+      {
+        System.out.println(anException);
+      }
+    
+    int rootDepth = 0;
+    for (ForestNode aNode : forestNodes)
+      {
+        if (aNode.isRoot())
+          {
+            aNode.recursiveInitRows();
+            aNode.recursiveInitDepth(rootDepth);
+          }
+      }
+    return;
+  }
+
+  public void perform()
+  {
+    int rootRows = 0;
+    this.resetNodes();
+    for (ForestNode aNode : forestNodes)
+      {
+        if (aNode.isRoot())
+          {
+            this.recursiveNodeAligning(rootRows, aNode, 0);
+            rootRows += aNode.getRows();
+          }
+      }
+    return;
+  }
+
+  public void run()
+  {
+    int rootRows = 0;
+    this.resetNodes();
+    for (ForestNode aNode : forestNodes)
+      {
+        if (aNode.isRoot())
+          {
+            this.recursiveNodeAligning(rootRows, aNode, 50);
+            rootRows += aNode.getRows();
+          }
+      }
+    return;
+  }
+
+  public void recursiveNodeAligning(int line, ForestNode aNode, int waitTime)
+  {
+    double aNodeX, aNodeY;
+    JLabel aLabel;
+    aLabel = aNode.getLabel();
+    if (!aNode.isRoot())
+      {
+        JLabel aParentLabel;
+        aParentLabel = aNode.getParent().getLabel();
+        aNodeX = aParentLabel.getX() + aParentLabel.getWidth() + Constants.HORIZONTAL_INTERVAL;
+        aNodeY = aParentLabel.getY() + aParentLabel.getHeight() * line + line * Constants.VERTICAL_INTERVAL;
+      }
+    else
+      {
+        aNodeX = aLabel.getX();
+        aNodeY = line * aLabel.getHeight() + line * Constants.VERTICAL_INTERVAL - offset.y;
+      }
+    aNode.moveTo((int) aNodeX, (int) aNodeY);
+    this.changed();
+    try
+      {
+        Thread.sleep(waitTime);
+      }
+    catch (InterruptedException anException)
+      {
+        System.err.println(anException);
+        throw new RuntimeException(anException.toString());
+      }
+
+    int childLine = 0;
+    for (ForestNode aChild : aNode.getChildren().values())
+      {
+        if (aChild.getParent().equals(aNode))
+          {
+            this.recursiveNodeAligning(childLine, aChild, waitTime);
+            childLine += aChild.getRows() - 1;
+            childLine++;
+          }
+      }
+    
+    aNodeX = aLabel.getX();
+    if ((aNode.getRows() % 2) == 0)
+      {
+        aNodeY = aLabel.getY() + (aNode.getRows() / 2 - 0.5) * aLabel.getHeight() + aNode.getRows() / 2 * Constants.VERTICAL_INTERVAL;
+      }
+    else
+      {
+        aNodeY = aLabel.getY() + (aNode.getRows() / 2) * aLabel.getHeight() + aNode.getRows() / 2 * Constants.VERTICAL_INTERVAL;
+      }
+    aNode.moveTo((int) aNodeX, (int) aNodeY);
+    this.changed();
+    try
+      {
+        Thread.sleep(waitTime);
+      }
+    catch (InterruptedException anException)
+      {
+        System.err.println(anException);
+        throw new RuntimeException(anException.toString());
+      }
+
+    return;
+  }
+
+  public void scrollNodes(Point aPoint)
+  {
+    offset = aPoint;
+    if (!offset.equals(oldOffset))
+      {
+        for (ForestNode aNode : forestNodes)
+          {
+            Point nodePoint = aNode.getLabel().getLocation();
+            nodePoint.translate(-offset.x + oldOffset.x, -offset.y + oldOffset.y);
+            aNode.getLabel().setLocation(nodePoint);
+          }
+      }
+    oldOffset = new Point(offset);
+  }
+
+  public void resetNodes()
+  {
+    int aNodeX = 0, aNodeY = Constants.VERTICAL_INTERVAL;
+    for (ForestNode aNode : forestNodes)
+      {
+        aNode.moveTo(aNodeX, aNodeY);
+        JLabel aLabel = aNode.getLabel();
+        aNodeY += aLabel.getHeight() + Constants.VERTICAL_INTERVAL;
+      }
+    return;
+  }
+
+  /**
+   * ノードの集合の最後にノードを追加する。
+   */
+  public void addForestNode(ForestNode aNode)
+  {
+    forestNodes.add(aNode);
+    return;
+  }
+
+  /**
+   * インデックスで指定されたノードを返す。
+   */
+  public ForestNode getForestNode(int anIndex)
+  {
+    ForestNode aNode = forestNodes.get(anIndex);
+    return aNode;
+  }
+
+  /**
+   * ノードの集合を返す。
+   */
+  public ArrayList<ForestNode> getForestNodes()
+  {
+    return forestNodes;
+  }
+
+  public JPopupMenu getPopupMenu()
+  {
+    return popupMenu;
+  }
+  
+}</pre>
 <div class="belt"><h3><a name="ForestView">ForestView（フォレストビュー）</a></h3></div>
-<pre>
+<pre>package forest;
 
 
+import java.util.ArrayList;
+import java.awt.Color;
+import java.awt.Point;
+import java.awt.Graphics;
+import javax.swing.JLabel;
 
 
-</pre>
+public class ForestView extends mvc.View
+{
+
+  public ForestView(ForestModel aModel, ForestController aController)
+  {
+    super(aModel, aController);    
+  }
+
+  public void paintComponent(Graphics aGraphics)
+  {
+    int width = this.getWidth();
+    int height = this.getHeight();
+    aGraphics.setColor(Color.white);
+    aGraphics.fillRect(0, 0, width, height);
+
+    ForestModel aModel = (ForestModel) model;
+    Point aPoint = this.scrollAmount();
+    aModel.scrollNodes(aPoint);
+    return;
+  }
+
+  public void paintChildren(Graphics aGraphics)
+  {
+    super.paintChildren(aGraphics);
+
+    aGraphics.setColor(Color.black);
+
+    ForestModel aModel = (ForestModel) model;
+    JLabel aNodeLabel;
+    int aNodeX, aNodeY;
+    JLabel aParentLabel;
+    int aParentX, aParentY;
+    for (ForestNode aNode : aModel.getForestNodes())
+      {
+        if (!aNode.isRoot())
+          {
+            aNodeLabel = aNode.getLabel();
+            aNodeX = aNodeLabel.getX();
+            aNodeY = aNodeLabel.getY() + aNodeLabel.getHeight() / 2;
+            
+            for (ForestNode aParent : aNode.getParents())
+              {
+                aParentLabel = aParent.getLabel();
+                aParentX = aParentLabel.getX() + aParentLabel.getWidth();
+                aParentY = aParentLabel.getY() + aParentLabel.getHeight() / 2;
+            
+                aGraphics.drawLine(aNodeX, aNodeY, aParentX, aParentY);
+              }
+          }
+      }
+  }
+
+}</pre>
 <div class="belt"><h3><a name="ForestController">ForestController（フォレストコントローラー）</a></h3></div>
-<pre>
+<pre>package forest;
 
 
+import java.awt.Point;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.ActionEvent;
+import javax.swing.SwingUtilities;
+import javax.swing.event.MouseInputAdapter;
+import javax.swing.JPopupMenu;
 
-</pre>
+
+public class ForestController extends mvc.Controller implements ActionListener
+{
+  
+  public ForestController()
+  {
+    super();
+  }
+  
+  public void mouseClicked(MouseEvent aMouseEvent)
+  {
+    Point aPoint = aMouseEvent.getPoint();
+    if (SwingUtilities.isRightMouseButton(aMouseEvent))
+      {
+        ForestModel aModel = (ForestModel) model;
+        aModel.getPopupMenu().show(aMouseEvent.getComponent(), aPoint.x, aPoint.y);
+      }
+    else
+      {
+        aPoint.translate(view.scrollAmount().x, view.scrollAmount().y);
+      }
+    return;
+  }
+
+  public void actionPerformed(ActionEvent anActionEvent)
+  {
+    ForestModel aModel = (ForestModel) model;
+    Thread aThread = new Thread(aModel);
+    aThread.start();
+    return;
+  }
+
+}</pre>
 <div class="belt"><h3><a name="ForestNode">ForestNode（フォレストノード）</a></h3></div>
-<pre>
+<pre>package forest;
 
 
+import java.util.ArrayList;
+import java.util.TreeMap;
+import java.awt.Font;
+import java.awt.Color;
+import java.awt.Dimension;
+import javax.swing.JLabel;
+import javax.swing.border.LineBorder;
 
-</pre>
+
+public class ForestNode extends Object
+{
+
+  /**
+   * 自身を描画するために View に渡すラベル
+   */
+  private JLabel label;
+
+  private ForestNodeController controller;
+
+  /**
+   * 自身のサイズ
+   */
+  private Dimension size;
+
+  private ArrayList<ForestNode> parents;
+
+  private TreeMap<Integer, ForestNode> children;
+
+  private int rows;
+
+  private int depth;
+
+  public ForestNode(String aText)
+  {
+    label = new JLabel(aText);
+    label.setBorder(new LineBorder(Color.black));
+    label.setFont(new Font("Serif", Font.PLAIN, Constants.FONT_SIZE));
+    this.adjustLabelSize();
+
+    controller = new ForestNodeController();
+    controller.setLabel(label);
+
+    parents = new ArrayList<ForestNode>();
+    children = new TreeMap<Integer, ForestNode>();
+    depth = 0;
+  }
+
+  /**
+   * ラベルを返す
+   */
+  public JLabel getLabel()
+  {
+    return label;
+  }
+
+  /**
+   * ラベルのサイズを文字列とフォントに合わせて適切なサイズにする
+   */
+  public void adjustLabelSize()
+  {
+    size = label.getPreferredSize();
+    label.setSize(size);
+    return;
+  }
+
+  /**
+   * 指定された x, y 座標に移動する
+   */
+  public void moveTo(int x, int y)
+  {
+    label.setBounds(x, y, size.width, size.height);
+    return;
+  }
+
+  public void addParent(ForestNode aNode)
+  {
+    parents.add(aNode);
+    return;
+  }
+
+  public ForestNode getParent()
+  {
+    ForestNode aParent = null;
+    for (ForestNode aNode : parents)
+      {
+        if (aParent == null || aNode.getDepth() > aParent.getDepth())
+          {
+            aParent = aNode;
+          }
+      }
+    return aParent;
+  }
+
+  public ArrayList<ForestNode> getParents()
+  {
+    return parents;
+  }
+
+  public void addChild(int anIndex, ForestNode aNode)
+  {
+    children.put(anIndex, aNode);
+    return;
+  }
+
+  public TreeMap<Integer, ForestNode> getChildren()
+  {
+    return children;
+  }
+
+  public void recursiveInitRows()
+  {
+    rows = 0;
+    if (!children.isEmpty())
+      {
+        for (ForestNode aChild : children.values())
+          {
+            aChild.recursiveInitRows();
+            rows += aChild.getRows();
+          }
+      }
+    else
+      {
+        rows++;
+      }
+    return;
+  }
+
+  public void recursiveInitDepth(int parentDepth)
+  {
+    int aDepth = parentDepth + 1;
+    if (depth != 0)
+      {
+        if (aDepth < depth)
+          {
+            return;
+          }
+      }
+    depth = aDepth;
+    if (!children.isEmpty())
+      {
+        for (ForestNode aChild : children.values())
+          {
+            aChild.recursiveInitDepth(depth);
+          }
+      }
+    return;
+  }
+
+  public int getRows()
+  {
+    return rows;
+  }
+
+  public int getDepth()
+  {
+    return depth;
+  }
+
+  public boolean isRoot()
+  {
+    if (parents.isEmpty())
+      {
+        return true;
+      }
+    else
+      {
+        return false;
+      }
+  }
+
+}</pre>
 <div class="belt"><h3><a name="ForestNodeController">ForestNodeController（フォレストノードコントローラー）</a></h3></div>
-<pre>
+<pre>package forest;
 
 
+import java.awt.event.MouseEvent;
+import javax.swing.JLabel;
+import javax.swing.event.MouseInputAdapter;
 
-</pre>
+
+public class ForestNodeController extends MouseInputAdapter
+{
+
+  private JLabel label;
+
+  public ForestNodeController()
+  {
+    super();
+    label = null;
+  }
+
+  public void mouseClicked(MouseEvent aMouseEvent)
+  {
+    System.out.println(label.getText());
+    return;
+  }
+
+  public void setLabel(JLabel aLabel)
+  {
+    label = aLabel;
+    label.addMouseListener(this);
+    label.addMouseMotionListener(this);
+    return;
+  }
+
+}</pre>
 <div class="belt"><h3><a name="Constants">Constants（コンスタンツ）</a></h3></div>
-<pre>
+<pre>package forest;
 
 
+public class Constants
+{
 
+  public static int FONT_SIZE = 12;
 
+  public static int HORIZONTAL_INTERVAL = 25;
 
+  public static int VERTICAL_INTERVAL = 2;
 
-
-
-
-</pre>
+}</pre>
 <div class="belt"><h3><a name="Forest.mf">Forest.mf（マニフェストファイル）</a></h3></div>
 <pre>Manifest-Version: 1.0
 Main-Class: forest.Example</pre>

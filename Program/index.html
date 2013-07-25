@@ -261,193 +261,756 @@ th {
 <br>
   <li><a href="#JFrame">JFrame</a>（ジェーフレイム）</li>
   <li><a href="#JLabel">JLabel</a>（ジェーラベル）</li>
-<br>
-<br>
-  <li><a href="#"></a>（）</li>
-  <li><a href="#"></a>（）</li>
-<br>
-<br>
-  <ul>
-  <br>
-  <li><a href="#Forest.mf">Forest.mf</a>（マニフェストファイル）</li>
-  <li><a href="#Makefile">Makefile</a>（メイクファイル）</li>
-  <li><a href="#build.xml">build.xml</a>（ビルドファイル）</li>
+ <ul>
+ <br>
+   <li><a href="#Forest.mf">Forest.mf</a>（マニフェストファイル）</li>
+   <li><a href="#Makefile">Makefile</a>（メイクファイル）</li>
+   <li><a href="#build.xml">build.xml</a>（ビルドファイル）</li>
+ </ul>
 </ul>
-</ul>
-<div class="belt">
-<h3><a name="Example">Example（メインクラス）</a></h3>
-</div>
-
-
+<div class="belt"><h3><a name="Example">Example（メインクラス）</a></h3></div>
 <pre>
-<br><br><br><br><br><br><br><br><br><br>
-ここに
-<br><br><br><br><br><br><br><br><br><br>
+
+
 </pre>
+<div class="belt"><h3><a name="Model">Model（モデル）</a></h3></div>
+<pre>package forest;
 
 
+import java.util.ArrayList;
+import java.io.File;
+import java.io.FileReader;
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.awt.Color;
+import java.awt.Point;
+import java.awt.Dimension;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
 
-<div class="belt">
-<h3><a name="Model">Model（モデル）</a></h3>
-</div>
 
+public class ForestModel extends mvc.Model
+{
+
+  /**
+   * ノードの集合
+   */
+  private ArrayList<ForestNode> forestNodes;
+
+  private Point offset;
+
+  private Point oldOffset;
+
+  public ForestModel(File aFile)
+  {
+    super();
+    forestNodes = new ArrayList<ForestNode>();
+    offset = new Point(0, 0);
+    oldOffset = new Point(0, 0);
+    this.createNodes(aFile);
+    this.open(aFile.getName());
+    this.perform();
+  }
+
+  public void open(String aFileName)
+  {
+    ForestView aView = new ForestView(this);
+    JFrame aWindow = new JFrame(aFileName);
+    aView.setLayout(null);
+
+    aWindow.getContentPane().add(aView);
+    aWindow.setMinimumSize(new Dimension(400, 300));
+    aWindow.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    aWindow.setSize(800, 600);
+    aWindow.setVisible(true);
+
+    int aNodeX = 0, aNodeY = Constants.VERTICAL_INTERVAL;
+    for (ForestNode aNode : forestNodes)
+      {
+        aNode.moveTo(aNodeX, aNodeY);
+        JLabel aLabel = aNode.getLabel();
+        aView.add(aLabel);
+        aNodeY += aLabel.getHeight() + Constants.VERTICAL_INTERVAL;
+      }
+    return;
+  }
+
+  /**
+   * ファイルの名前からノードの集合を作成する。
+   */
+  public void createNodes(File aFile)
+  {
+    try
+      {
+        FileReader aFileReader = new FileReader(aFile);
+        BufferedReader aBufferedReader = new BufferedReader(aFileReader);
+        String aLine;
+        while ((aLine = aBufferedReader.readLine()) != null)
+          {
+            if (aLine.equals("nodes:"))
+              {
+                String[] anElement;
+                while (!(aLine = aBufferedReader.readLine()).equals("branches:"))
+                  {
+                    anElement = aLine.split(", ");
+                    ForestNode aNode = new ForestNode(anElement[1]);
+                    this.addForestNode(aNode);
+                  }
+              }
+            if (aLine.equals("branches:"))
+              {
+                String[] indexes;
+                int parentIndex, childIndex;
+                ForestNode aParent, aChild;
+                while ((aLine = aBufferedReader.readLine()) != null)
+                  {
+                    indexes = aLine.split(", ");
+                    parentIndex = Integer.parseInt(indexes[0]) - 1;
+                    childIndex = Integer.parseInt(indexes[1]) - 1;
+
+                    aParent = this.getForestNode(parentIndex);
+                    aChild = this.getForestNode(childIndex);
+
+                    aParent.addChild(childIndex, aChild);
+                    aChild.addParent(aParent);
+                  }
+              }
+          }
+            
+        aBufferedReader.close();
+        aFileReader.close();
+      }
+    catch (FileNotFoundException anException)
+      {
+        System.out.println(anException);
+      }
+    catch (IOException anException)
+      {
+        System.out.println(anException);
+      }
+    
+    int rootDepth = 0;
+    for (ForestNode aNode : forestNodes)
+      {
+        if (aNode.isRoot())
+          {
+            aNode.recursiveInitRows();
+            aNode.recursiveInitDepth(rootDepth);
+          }
+      }
+    return;
+  }
+
+  public void perform()
+  {
+    int rootRows = 0;
+    for (ForestNode aNode : forestNodes)
+      {
+        if (aNode.isRoot())
+          {
+            this.recursiveNodeAligning(rootRows, aNode);
+            rootRows += aNode.getRows();
+          }
+      }
+    return;
+  }
+
+  public void recursiveNodeAligning(int line, ForestNode aNode)
+  {
+    double aNodeX, aNodeY;
+    JLabel aLabel;
+    aLabel = aNode.getLabel();
+    if (!aNode.isRoot())
+      {
+        JLabel aParentLabel;
+        aParentLabel = aNode.getParent().getLabel();
+        aNodeX = aParentLabel.getX() + aParentLabel.getWidth() + Constants.HORIZONTAL_INTERVAL;
+        aNodeY = aParentLabel.getY() + aParentLabel.getHeight() * line + line * Constants.VERTICAL_INTERVAL;
+      }
+    else
+      {
+        aNodeX = aLabel.getX();
+        aNodeY = line * aLabel.getHeight() + line * Constants.VERTICAL_INTERVAL - offset.y;
+      }
+    aNode.moveTo((int) aNodeX, (int) aNodeY);
+    this.changed();
+    try
+      {
+        Thread.sleep(50);
+      }
+    catch (InterruptedException anException)
+      {
+        System.err.println(anException);
+        throw new RuntimeException(anException.toString());
+      }
+
+    int childLine = 0;
+    for (ForestNode aChild : aNode.getChildren().values())
+      {
+        if (aChild.getParent().equals(aNode))
+          {
+            this.recursiveNodeAligning(childLine, aChild);
+            childLine += aChild.getRows() - 1;
+            childLine++;
+          }
+      }
+    
+    aNodeX = aLabel.getX();
+    if ((aNode.getRows() % 2) == 0)
+      {
+        aNodeY = aLabel.getY() + (aNode.getRows() / 2 - 0.5) * aLabel.getHeight() + aNode.getRows() / 2;
+      }
+    else
+      {
+        aNodeY = aLabel.getY() + (aNode.getRows() / 2) * aLabel.getHeight() + aNode.getRows() / 2;
+      }
+    aNode.moveTo((int) aNodeX, (int) aNodeY);
+    this.changed();
+    try
+      {
+        Thread.sleep(50);
+      }
+    catch (InterruptedException anException)
+      {
+        System.err.println(anException);
+        throw new RuntimeException(anException.toString());
+      }
+
+    return;
+  }
+
+  public void scrollNodes(Point aPoint)
+  {
+    offset = aPoint;
+    if (!offset.equals(oldOffset))
+      {
+        for (ForestNode aNode : forestNodes)
+          {
+            Point nodePoint = aNode.getLabel().getLocation();
+            nodePoint.translate(-offset.x + oldOffset.x, -offset.y + oldOffset.y);
+            aNode.getLabel().setLocation(nodePoint);
+          }
+      }
+    oldOffset = new Point(offset);
+  }
+
+  /**
+   * ノードの集合の最後にノードを追加する。
+   */
+  public void addForestNode(ForestNode aNode)
+  {
+    forestNodes.add(aNode);
+    return;
+  }
+
+  /**
+   * インデックスで指定されたノードを返す。
+   */
+  public ForestNode getForestNode(int anIndex)
+  {
+    ForestNode aNode = forestNodes.get(anIndex);
+    return aNode;
+  }
+
+  /**
+   * ノードの集合を返す。
+   */
+  public ArrayList<ForestNode> getForestNodes()
+  {
+    return forestNodes;
+  }
+
+}
+	 * 指定されたビューを依存物に設定する。
+	 * 良好（2010年7月25日）
+	 */
+	public void addDependent(View aView)
+	{
+		dependents.add(aView);
+		return;
+	}
+	
+	/**
+	 * モデルの内部状態が変化していたので、自分の依存物へupdateのメッセージを送信する。
+	 * 良好（2010年7月25日）
+	 */
+	public void changed()
+	{
+		Iterator anIterator = dependents.iterator();
+		while (anIterator.hasNext())
+		{
+			View aView = (View)anIterator.next();
+			aView.update();
+		}
+		return;
+	}
+	
+	/**
+	 * 初期化する。
+	 * 良好（2010年7月25日）
+	 */
+	private void initialize()
+	{
+		dependents = new ArrayList<View>();
+		picture = null;
+		return;
+	}
+		
+	/**
+	 * 何もしない。
+	 * 良好（2010年7月25日）
+	 */
+	public void perform()
+	{
+		return;
+	}
+	
+	/**
+	 * 画像（モデルの内容物）を応答する。
+	 * 良好（2010年7月25日）
+	 */
+	public BufferedImage picture()
+	{
+		return picture;
+	}
+		
+	/**
+	 * 画像（モデルの内容物）を設定する。
+	 * 良好（2010年7月25日）
+	 */
+	public void picture(BufferedImage anImage)
+	{
+		picture = anImage;
+		return;
+	}
+	
+	/**
+	 * このインスタンスを文字列にして応答する。
+	 * 良好（2010年7月25日）
+	 */
+	public String toString()
+	{
+		StringBuffer aBuffer = new StringBuffer();
+		Class aClass = this.getClass();
+		aBuffer.append(aClass.getName());
+		aBuffer.append("[picture=");
+		aBuffer.append(picture);
+		aBuffer.append("]");
+		return aBuffer.toString();
+	}
+}</pre>
+<div class="belt"><h3><a name="View">View（ビュー）</a></h3></div>
+<pre>package mvc;
+
+import java.awt.Point;
+import java.awt.Graphics;
+import java.awt.image.BufferedImage;
+import javax.swing.JPanel;
+import java.awt.Color;
+
+/**
+ * ビュー。
+ */
+public class View extends JPanel
+{
+	/**
+	 * 情報を握っているModelのインスタンスを束縛する。
+	 * 束縛されるModelのインスタンスはpicture()というメッセージに応答できなければならない。
+	 * 良好（2010年7月25日）
+	 */
+	protected Model model;
+
+	/**
+	 * 制御を司るControllerのインスタンスを束縛する。
+	 * 良好（2010年7月25日）
+	 */
+	protected Controller controller;
+	
+	/**
+	 * スクロール量としてPointのインスタンスを束縛する。
+	 * 良好（2010年7月25日）
+	 */
+	private Point offset;
+
+	/**
+	 * インスタンスを生成して応答する。
+	 * 指定されたモデルの依存物となり、コントローラを作り、モデルとビューを設定し、スクロール量を(0, 0)に設定する。
+	 * 良好（2010年7月25日）
+	 */
+	public View(Model aModel)
+	{
+		super();
+		model = aModel;
+		model.addDependent(this);
+		controller = new Controller();
+		controller.setModel(model);
+		controller.setView(this);
+		offset = new Point(0, 0);
+	}
+
+	/**
+	 * インスタンスを生成して応答する。
+	 * 指定されたモデルの依存物となり、指定されたコントローラにモデルとビューを設定し、スクロール量を(0, 0)に設定する。
+	 * 良好（2010年7月25日）
+	 */
+	public View(Model aModel, Controller aController)
+	{
+		super();
+		model = aModel;
+		model.addDependent(this);
+		controller = aController;
+		controller.setModel(model);
+		controller.setView(this);
+		offset = new Point(0, 0);
+	}
+	
+	/**
+	 * 指定されたグラフィクスに背景色（灰色）でビュー全体を塗り、その後にモデルの内容物を描画する。
+	 * それはスクロール量（offset）を考慮してモデル画像（picture）をペイン（パネル）内に描画することである。
+	 * 良好（2010年7月25日）
+	 */
+	public void paintComponent(Graphics aGraphics)
+	{
+		int width = this.getWidth();
+		int height = this.getHeight();
+		aGraphics.setColor(Color.gray);
+		aGraphics.fillRect(0, 0, width, height);
+		if (model == null) { return; }
+		BufferedImage picture = model.picture();
+		if (picture == null) { return; }
+		aGraphics.drawImage(picture, offset.x, offset.y, null);
+		return;
+	}
+
+	/**
+	 * スクロール量（offsetの逆向きの大きさ）を応答する。
+	 * 良好（2010年7月25日）
+	 */
+	public Point scrollAmount()
+	{
+		int x = 0 - offset.x;
+		int y = 0 - offset.y;
+		return (new Point(x, y));
+	}
+	
+	/**
+	 * スクロール量を指定された座標分だけ相対スクロールする。
+	 * 良好（2010年7月25日）
+	 */
+	public void scrollBy(Point aPoint)
+	{
+		int x = offset.x + aPoint.x;
+		int y = offset.y + aPoint.y;
+		this.scrollTo(new Point(x, y));
+		return;
+	}
+
+	/**
+	 * スクロール量を指定された座標に設定（絶対スクロール）する。
+	 * 良好（2010年7月25日）
+	 */
+	public void scrollTo(Point aPoint)
+	{
+		offset = aPoint;
+		return;
+	}
+
+	/**
+	 * このインスタンスを文字列にして応答する。
+	 * 良好（2010年7月25日）
+	 */
+	public String toString()
+	{
+		StringBuffer aBuffer = new StringBuffer();
+		Class aClass = this.getClass();
+		aBuffer.append(aClass.getName());
+		aBuffer.append("[model=");
+		aBuffer.append(model);
+		aBuffer.append(",offset=");
+		aBuffer.append(offset);
+		aBuffer.append("]");
+		return aBuffer.toString();
+	}
+	
+	/**
+	 * ビューの全領域を再描画する。
+	 * 良好（2010年7月25日）
+	 */
+	public void update()
+	{
+		this.repaint(0, 0, this.getWidth(), this.getHeight());
+		return;
+	}
+}</pre>
+<div class="belt"><h3><a name="Controller">Controller（コントローラ）</a></h3></div>
+<pre>package mvc;
+
+import java.awt.Component;
+import java.awt.Cursor;
+import java.awt.Point;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
+import javax.swing.event.MouseInputAdapter;
+
+/**
+ * コントローラ。
+ */
+public class Controller extends MouseInputAdapter implements MouseWheelListener
+{
+	/**
+	 * 情報を握っているModelのインスタンスを束縛する。
+	 * 良好（2010年7月25日）
+	 */
+	protected Model model;
+	
+	/**
+	 * 表示を司るViewのインスタンスを束縛する。
+	 * 良好（2010年7月25日）
+	 */
+	protected View view;
+	
+	/**
+	 * 以前にマウスのボタンが押下された場所をPointのインスタンスとして束縛する。
+	 * 良好（2010年7月25日）
+	 */
+	private Point previous;
+	
+	/**
+	 * 現在にマウスのボタンが押下された場所をPointのインスタンスとして束縛する。
+	 * 良好（2010年7月25日）
+	 */
+	private Point current;
+
+	/**
+	 * インスタンスを生成して応答する。
+	 * すべてのインスタンス変数（model, view, previous, current）をnull化する。
+	 * 良好（2010年7月25日）
+	 */
+	public Controller()
+	{
+		super();
+		model = null;
+		view = null;
+		previous = null;
+		current = null;
+	}
+
+	/**
+	 * 指定されたマウスイベントからマウスカーサの位置を獲得して、モデル座標系でのクリック位置を割り出して標準出力に出力する。
+	 * 良好（2010年7月25日）
+	 */
+	public void mouseClicked(MouseEvent aMouseEvent)
+	{
+		Point aPoint = aMouseEvent.getPoint();
+		aPoint.translate(view.scrollAmount().x, view.scrollAmount().y);
+		System.out.println(aPoint);
+		return;
+	}
+
+	/**
+	 * マウスカーサの形状を移動の形に変化させ、指定されたマウスイベントからマウスカーサの位置を獲得して、
+	 * インスタンス変数currentに設定すると共に、以前のマウスカーサの位置からの差分を計算する。
+	 * そして、その差分だけビューに対してスクロールを依頼し、その後にビューの再描画を依頼する。
+	 * 最後にインスタンス変数previousをインスタンス変数currentに更新する。
+	 * 良好（2010年7月25日）
+	 */
+	public void mouseDragged(MouseEvent aMouseEvent)
+	{
+		Cursor aCursor = Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR);
+		Component aComponent = (Component)aMouseEvent.getSource();
+		aComponent.setCursor(aCursor);
+		current = aMouseEvent.getPoint();
+		int x = current.x - previous.x;
+		int y = current.y - previous.y;
+		Point point = new Point(x, y);
+		view.scrollBy(point);
+		view.repaint();
+		previous = current;
+		return;
+	}
+
+	/**
+	 * 何もしない。
+	 * 良好（2010年7月25日）
+	 */
+	public void mouseEntered(MouseEvent aMouseEvent)
+	{
+		return;
+	}
+
+	/**
+	 * 何もしない。
+	 * 良好（2010年7月25日）
+	 */
+	public void mouseExited(MouseEvent aMouseEvent)
+	{
+		return;
+	}
+
+	/**
+	 * 何もしない。
+	 * 良好（2010年7月25日）
+	 */
+	public void mouseMoved(MouseEvent aMouseEvent)
+	{
+		return;
+	}
+
+	/**
+	 * マウスカーサの形状を十字に変化させ、指定されたマウスイベントからマウスカーサの位置を獲得して、
+	 * インスタンス変数currentに設定する共にインスタンス変数previousをインスタンス変数currentに更新する。
+	 * 良好（2010年7月25日）
+	 */
+	public void mousePressed(MouseEvent aMouseEvent)
+	{
+		Cursor aCursor = Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR);
+		Component aComponent = (Component)aMouseEvent.getSource();
+		aComponent.setCursor(aCursor);
+		current = aMouseEvent.getPoint();
+		previous = current;
+		return;
+	}
+
+	/**
+	 * マウスカーサの形状をデフォルトに戻し、指定されたマウスイベントからマウスカーサの位置を獲得して、
+	 * インスタンス変数currentに設定する共にインスタンス変数previousをインスタンス変数currentに更新する。
+	 * 良好（2010年7月25日）
+	 */
+	public void mouseReleased(MouseEvent aMouseEvent)
+	{
+		Cursor aCursor = Cursor.getDefaultCursor();
+		Component aComponent = (Component)aMouseEvent.getSource();
+		aComponent.setCursor(aCursor);
+		current = aMouseEvent.getPoint();
+		previous = current;
+		return;
+	}
+
+	/**
+	 * 何もしない。
+	 * 良好（2010年7月25日）
+	 */
+	public void mouseWheelMoved(MouseWheelEvent aMouseWheelEvent)
+	{
+		return;
+	}
+
+	/**
+	 * 指定されたモデルをインスタンス変数modelに設定する。
+	 * 良好（2010年7月25日）
+	 */
+	public void setModel(Model aModel)
+	{
+		model = aModel;
+		return;
+	}
+
+	/**
+	 * 指定されたビューをインスタンス変数viewに設定し、ビューのマウスのリスナおよびモーションリスナそしてホイールリスナをこのコントローラにする。
+	 * 良好（2010年7月25日）
+	 */
+	public void setView(View aView)
+	{
+		view = aView;
+		view.addMouseListener(this);
+		view.addMouseMotionListener(this);
+		view.addMouseWheelListener(this);
+		return;
+	}
+	
+	/**
+	 * このインスタンスを文字列にして応答する。
+	 * 良好（2010年7月25日）
+	 */
+	public String toString()
+	{
+		StringBuffer aBuffer = new StringBuffer();
+		Class aClass = this.getClass();
+		aBuffer.append(aClass.getName());
+		aBuffer.append("[model=");
+		aBuffer.append(model);
+		aBuffer.append(",view=");
+		aBuffer.append(view);
+		aBuffer.append("]");
+		return aBuffer.toString();
+	}
+}</pre>
+<div class="belt"><h3><a name="ForestModel">ForestModel（フォレストモデル）</a></h3></div>
 <pre>
-<br><br><br><br><br><br><br><br><br><br>
-ここに
-<br><br><br><br><br><br><br><br><br><br>
+
+
+
+
+
 </pre>
-
-
-<div class="belt">
-<h3><a name="View">View（ビュー）</a></h3>
-</div>
-
-
+<div class="belt"><h3><a name="ForestView">ForestView（フォレストビュー）</a></h3></div>
 <pre>
-<br><br><br><br><br><br><br><br><br><br>
-ここに
-<br><br><br><br><br><br><br><br><br><br>
+
+
+
+
 </pre>
-
-
-<div class="belt">
-<h3><a name="Controller">Controller（コントローラ）</a></h3>
-</div>
-
-
+<div class="belt"><h3><a name="ForestController">ForestController（フォレストコントローラー）</a></h3></div>
 <pre>
-<br><br><br><br><br><br><br><br><br><br>
-ここに
-<br><br><br><br><br><br><br><br><br><br>
+
+
+
 </pre>
-
-
-
-<div class="belt">
-<h3><a name="ForestModel">ForestModel（フォレストモデル）</a></h3>
-</div>
-
-
+<div class="belt"><h3><a name="ForestNode">ForestNode（フォレストノード）</a></h3></div>
 <pre>
-<br><br><br><br><br><br><br><br><br><br>
-ここに
-<br><br><br><br><br><br><br><br><br><br>
+
+
+
 </pre>
-
-
-
-<div class="belt">
-<h3><a name="ForestView">ForestView（フォレストビュー）</a></h3>
-</div>
-
-
+<div class="belt"><h3><a name="JFrame">JFrame（ジェーフレイム）</a></h3></div>
 <pre>
-<br><br><br><br><br><br><br><br><br><br>
-ここに
-<br><br><br><br><br><br><br><br><br><br>
+
+
+
+
+
+
 </pre>
-
-
-
-<div class="belt">
-<h3><a name="ForestController">ForestController（フォレストコントローラー）</a></h3>
-</div>
-
-
+<div class="belt"><h3><a name="JLabel">JLabel（ジェーラベル）</a></h3></div>
 <pre>
-<br><br><br><br><br><br><br><br><br><br>
-ここに
-<br><br><br><br><br><br><br><br><br><br>
+
+
+
+
+
+
+
+
+
 </pre>
+<div class="belt"><h3><a name="Forest.mf">Forest.mf（マニフェストファイル）</a></h3></div>
+<pre>Manifest-Version: 1.0
+Main-Class: forest.Example</pre>
+<div class="belt"><h3><a name="Makefile">Makefile（メイクファイル）</a></h3></div>
+<pre>ANT	= env LC_ALL=ja_JP.UTF-8 ant
 
+all:
+	$(ANT) all
 
+clean:
+	$(ANT) clean
 
+test:
+	$(ANT) test
 
+install:
+	$(ANT) install
 
+doc:
+	$(ANT) doc
 
-
-
-
-
-<div class="belt">
-<h3><a name="ForestNode">ForestNode（フォレストノード）</a></h3>
-</div>
-
-
-<pre>
-<br><br><br><br><br><br><br><br><br><br>
-ここに
-<br><br><br><br><br><br><br><br><br><br>
-</pre>
-
-
-
-<div class="belt">
-<h3><a name="JFrame">JFrame（ジェーフレイム）</a></h3>
-</div>
-
-
-<pre>
-<br><br><br><br><br><br><br><br><br><br>
-ここに
-<br><br><br><br><br><br><br><br><br><br>
-</pre>
-
-
-
-<div class="belt">
-<h3><a name="JLabel">JLabel（ジェーラベル）</a></h3>
-</div>
-
-
-<pre>
-<br><br><br><br><br><br><br><br><br><br>
-ここに
-<br><br><br><br><br><br><br><br><br><br>
-</pre>
-
-
-
-<div class="belt">
-<h3><a name="Forest.mf">Forest.mf（マニフェストファイル）</a></h3>
-</div>
-
-<pre>
-<br><br><br><br><br><br><br><br><br><br>
-ここに
-<br><br><br><br><br><br><br><br><br><br>
-</pre>
-
-
-
-
-<div class="belt">
-<h3><a name="Makefile">Makefile（メイクファイル）</a></h3>
-</div>
-
-
-<pre>
-<br><br><br><br><br><br><br><br><br><br>
-ここに
-<br><br><br><br><br><br><br><br><br><br>
-</pre>
-
-
-<div class="belt">
-<h3><a name="build.xml">build.xml（ビルドファイル）</a></h3>
-</div>
-
-
-<pre>
-<br><br><br><br><br><br><br><br><br><br>
-ここに
-<br><br><br><br><br><br><br><br><br><br>
-</pre>
-
-
-
-
+zip:
+	$(ANT) zip</pre>
+<div class="belt"><h3><a name="build.xml">build.xml（ビルドファイル）</a></h3></div>
+<a href="Forest/build.xml">buildファイル</a>
 <hr>
-<div class="right-small">Copyright 2013 Project Forest, Updated: 2013/07/16 (Created: 2013/07/23)</div>
+<div class="right-small">Copyright 2013 Project Forest, Updated: 2013/07/25 (Created: 2013/07/23)</div>
 </body>
 </html>

@@ -137,6 +137,12 @@ public class ForestMenus extends Object
         
         public void actionPerformed(ActionEvent anActionEvent)
         {
+          ArrayList<ForestNode> nodes = model.getForestNodes();
+          for (ForestNode aNode : nodes)
+            {
+              aNode.setFontSize(Constants.FONT_SIZE);
+              aNode.adjustLabelSize();
+            }
           model.resetNodes();
           return;
         }

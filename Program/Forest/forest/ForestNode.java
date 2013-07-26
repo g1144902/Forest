@@ -51,14 +51,16 @@ public class ForestNode extends Object
    */
   private int depth;
 
+  private int fontSize;
+
   /**
    * テキストから自身を形成
    */
   public ForestNode(String aText)
   {
     label = new JLabel(aText);
+    fontSize = Constants.FONT_SIZE;
     label.setBorder(new LineBorder(Color.black));
-    label.setFont(new Font("Serif", Font.PLAIN, Constants.FONT_SIZE));
     this.adjustLabelSize();
 
     controller = new ForestNodeController();
@@ -82,6 +84,7 @@ public class ForestNode extends Object
    */
   public void adjustLabelSize()
   {
+    label.setFont(new Font("Serif", Font.PLAIN, fontSize));
     size = label.getPreferredSize();
     label.setSize(size);
     return;
@@ -220,6 +223,17 @@ public class ForestNode extends Object
       {
         return false;
       }
+  }
+
+  public void setFontSize(int aFontSize)
+  {
+    fontSize = aFontSize;
+    return;
+  }
+
+  public int getFontSize()
+  {
+    return fontSize;
   }
 
 }

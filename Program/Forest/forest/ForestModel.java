@@ -10,10 +10,13 @@ import java.io.IOException;
 import java.awt.Color;
 import java.awt.Point;
 import java.awt.Dimension;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
+import javax.swing.MenuElement;
 
 
 /**
@@ -73,10 +76,8 @@ public class ForestModel extends mvc.Model implements Runnable
     aWindow.setSize(800, 600);
     aWindow.setVisible(true);
 
-    popupMenu = new JPopupMenu();
-    JMenuItem aMenuItem = new JMenuItem("Algorithm Animation");
-    aMenuItem.addActionListener(aController);
-    popupMenu.add(aMenuItem);
+    ForestMenus menus = new ForestMenus(this);
+    popupMenu = menus.init();
 
     for (ForestNode aNode : forestNodes)
       {
@@ -88,7 +89,7 @@ public class ForestModel extends mvc.Model implements Runnable
   }
 
   /**
-   * ファイルの名前からノードの集合を作成する。
+   * ファイルの名前からノードの集合を作成する
    */
   public void createNodes(File aFile)
   {
@@ -186,6 +187,12 @@ public class ForestModel extends mvc.Model implements Runnable
             rootRows += aNode.getRows();
           }
       }
+    MenuElement[] elements = popupMenu.getSubElements();
+    for (MenuElement anElement : elements)
+      {
+        JMenuItem anItem = (JMenuItem) anElement;
+        anItem.setEnabled(true);
+      }
     return;
   }
 
@@ -207,7 +214,7 @@ public class ForestModel extends mvc.Model implements Runnable
     else
       {
         aNodeX = aLabel.getX();
-        aNodeY = line * aLabel.getHeight() + line * Constants.VERTICAL_INTERVAL - offset.y;
+        aNodeY = line * aLabel.getHeight() + line * Constants.VERTICAL_INTERVAL;
       }
     aNode.moveTo((int) aNodeX, (int) aNodeY);
     this.changed();
@@ -290,7 +297,7 @@ public class ForestModel extends mvc.Model implements Runnable
   }
 
   /**
-   * ノードの集合の最後にノードを追加する。
+   * ノードの集合の最後にノードを追加する
    */
   public void addForestNode(ForestNode aNode)
   {
@@ -299,7 +306,7 @@ public class ForestModel extends mvc.Model implements Runnable
   }
 
   /**
-   * インデックスで指定されたノードを返す。
+   * インデックスで指定されたノードを返す
    */
   public ForestNode getForestNode(int anIndex)
   {
@@ -308,7 +315,7 @@ public class ForestModel extends mvc.Model implements Runnable
   }
 
   /**
-   * ノードの集合を返す。
+   * ノードの集合を返す
    */
   public ArrayList<ForestNode> getForestNodes()
   {

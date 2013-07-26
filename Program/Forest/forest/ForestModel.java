@@ -214,7 +214,7 @@ public class ForestModel extends mvc.Model implements Runnable
     else
       {
         aNodeX = aLabel.getX();
-        aNodeY = line * aLabel.getHeight() + line * Constants.VERTICAL_INTERVAL;
+        aNodeY = line * aLabel.getHeight() + line * Constants.VERTICAL_INTERVAL - offset.y;
       }
     aNode.moveTo((int) aNodeX, (int) aNodeY);
     this.changed();
@@ -286,7 +286,8 @@ public class ForestModel extends mvc.Model implements Runnable
    */
   public void resetNodes()
   {
-    int aNodeX = 0, aNodeY = Constants.VERTICAL_INTERVAL;
+    int aNodeX = 0 - offset.x;
+    int aNodeY = Constants.VERTICAL_INTERVAL;
     for (ForestNode aNode : forestNodes)
       {
         aNode.moveTo(aNodeX, aNodeY);

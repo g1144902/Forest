@@ -143,7 +143,7 @@ public class ForestMenus extends Object
               aNode.setFontSize(Constants.FONT_SIZE);
               aNode.adjustLabelSize();
             }
-          model.resetNodes();
+          model.perform();
           return;
         }
       }.setModel(model);
